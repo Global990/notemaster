@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+	<script src="https://cdn.jsdelivr.net/npm/vue@2.5.16/dist/vue.js"></script>
+<link href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9gVQ4dYFwwWSjIDZnLEWnxCjeSWFphJiwGPXr1jddIhOegiu1FwO5qRGvFXOdJZ4" crossorigin="anonymous">
+
+<style type="text/css">
+	.selected {
+		border: 3px solid rgba(0, 0, 0, .2) !important;
+		width:40px !important; 
+		height:40px !important;
+	}
+
+	.unselected {
+		background-color: white; 
+		width:30px; 
+		height:30px; 
+		border: 1px solid rgba(0, 0, 0, .2); 
+		display:inline-block; 
+		cursor: pointer
+	}
+
+	.blue{
+		background-color: blue; 
+	}
+
+	.red {
+		background-color: red; 
+	}
+
+	.green {
+		background-color: green; 
+	}
+
+</style>
+</head>
+<body>
+<div id="app">
+
+		<h1>{{title}}</h1>
+		<div class="form-group">
+			<label class="font-monospace" for="exampleInputEmail1">Title</label>
+			<input type="text" class="form-control" id="exampleInputEmail1" v-model="note.title">
+			<label>Choose a color</label>
+			<div class="colors" style="width:1500px; height:40px; margin-bottom: 10px;">
+				<div @click="setColor('white')" class="unselected" :class="{selected: note.color == 'white'}" ></div>
+				<div @click="setColor('blue')" class="unselected blue" :class="{selected: note.color == 'blue'}"></div>
+				<div @click="setColor('green')" class="unselected green" :class="{selected: note.color == 'green'}"></div>
+				<div @click="setColor('red')" class="unselected red" :class="{selected: note.color == 'red'}"></div>
+			</div>
+			<label for="">Content</label>
+			<textarea class="form-control" name="" id="" rows="3" v-model="note.text"></textarea>
+			<hr>
+			<button class="btn btn-primary" @click="addNote">Submit Note</button>
+		</div>
+
+	<h4>Show only</h2>
+	<select class="custom-select">
+  		<option selected>All</option>
+  		<option  v-for="color in colors" :value="color">{{color}}</option>
+	</select>
+	<hr>
+	<div class="row">
+		<template v-for="(note,index) in notes">
+			<div class="card m-3" :class="cardColor(index)" style="width: 18rem;">
+			  <div class="card-body">
+			  <button class="close" @click="removeNote(index)">&times;</button>
+			    <h5 class="card-title">{{note.title}}</h5>
+			    <h6 class="card-subtitle mb-2 text-muted">{{note.date}}</h6>
+			    <p class="card-text">{{note.text}}.</p>
+			  </div>
+			</div>
+		</template>
+	</div>
+</div>
+
+<script type="text/javascript">
+	var vm = new Vue({
+	  el: "#app",
+	  data: {
+	    title: 'NoteMaster',
+		note: {
+				title: '',
+				text: '',
+				color: ''
+		},
+		colors: [
+			'red',
+			'blue',
+			'green',
+		],
+		notes: [{
+			title: 'Prima nota',
+			text: 'Vai de capul meu ce text inspirat!',
+			color: 'white',
+			date: new Date().toLocaleString()
+		}]
+	  },
+	  computed: {
+
+	  }
+	  ,
+	  methods: {
+	  	addNote: function() {
+	  		let {title, text, color} = this.note;
+	  		this.notes.push({
+	  			title,
+	  			text,
+	  			color,
+	  			date: new Date().toLocaleString() 
+	  		});
+	  	},
+	  	removeNote: function(index) {
+	  		this.notes.splice(index,1);
+	  	},
+
+	  	setColor: function(color) {
+	  		this.note.color = color;
+	  	},
+	  	cardColor: function(index) {
+	  		return {
+	  			'text-white': this.notes[index].color != 'white',
+	  			'bg-success': this.notes[index].color == 'green',
+	  			'bg-danger': this.notes[index].color == 'red',
+	  			'bg-info': this.notes[index].color == 'blue',
+
+	  		}
+	  	}
+	  }
+	});
+</script>
+</body>
+</html>
