@@ -4,19 +4,21 @@
 	<title></title>
 	<script src="https://cdn.jsdelivr.net/npm/vue@2.5.16/dist/vue.js"></script>
 <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9gVQ4dYFwwWSjIDZnLEWnxCjeSWFphJiwGPXr1jddIhOegiu1FwO5qRGvFXOdJZ4" crossorigin="anonymous">
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.5/lodash.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/js-cookie@2/src/js.cookie.min.js"></script>
 
 <style type="text/css">
 	.selected {
 		border: 3px solid rgba(0, 0, 0, .2) !important;
-		width:40px !important; 
+		width:40px !important;
 		height:40px !important;
 	}
 
 	.unselected {
-		width:30px; 
-		height:30px; 
-		border: 1px solid rgba(0, 0, 0, .2); 
-		display:inline-block; 
+		width:30px;
+		height:30px;
+		border: 1px solid rgba(0, 0, 0, .2);
+		display:inline-block;
 		cursor: pointer
 	}
 
@@ -25,15 +27,15 @@
 	}
 
 	.blue{
-		background-color: blue; 
+		background-color: blue;
 	}
 
 	.red {
-		background-color: red; 
+		background-color: red;
 	}
 
 	.green {
-		background-color: green; 
+		background-color: green;
 	}
 
 </style>
@@ -43,6 +45,14 @@
 
 		<h1>{{title}}</h1>
 		<div class="form-group">
+
+			<p v-if="errors.length">
+				<b>Please correct the following error(s):</b>
+				<ul class="list-group">
+					<li class="list-group-item text-danger" v-for="error in errors">{{error}}</li>
+				</ul>
+			</p>
+
 			<label class="font-monospace" for="exampleInputEmail1">Title</label>
 			<input type="text" class="form-control" id="exampleInputEmail1" v-model="note.title">
 			<label>Choose a color</label>
@@ -53,6 +63,10 @@
 				<div @click="setColor('green')" class="unselected green" :class="{selected: note.color == 'green'}"></div>
 				<div @click="setColor('red')" class="unselected red" :class="{selected: note.color == 'red'}"></div> -->
 			</div>
+			<label>Choose a rank</label>
+			<select class="custom-select" v-model="note.rank">
+					<option  v-for="rank in ranks" :value="rank">{{rank}}</option>
+			</select>
 			<label for="">Content</label>
 			<textarea class="form-control" name="" id="" rows="3" v-model="note.text"></textarea>
 			<hr>
@@ -69,10 +83,13 @@
 		<template v-for="(note,index) in notes">
 			<div v-if="filter == note.color || filter == 'All'" class="card m-3" :class="cardColor(index)" style="width: 18rem;">
 			  <div class="card-body">
-			  <button class="close" @click="removeNote(index)">&times;</button>
+			  <button class="close" @click="removeNote(index)">
+					&times;
+				</button>
 			    <h5 class="card-title">{{note.title}}</h5>
-			    <h6 class="card-subtitle mb-2 text-muted">{{note.date}}</h6>
-			    <p class="card-text">{{note.text}}.</p>
+					<span class="badge badge-pill badge-dark float-right">{{note.rank}}</span>
+					<h6 class="card-subtitle mb-2 text-muted">{{note.date}}</h6>
+			    <p class="card-text">{{note.text}}</p>
 			  </div>
 			</div>
 		</template>
@@ -83,42 +100,79 @@
 	var vm = new Vue({
 	  el: "#app",
 	  data: {
+			errors: [],
 	    title: 'NoteMaster',
 	    filter: 'All',
+			rank: 'Select some rank.',
 		note: {
 				title: '',
 				text: '',
-				color: ''
+				color: '',
+				rank: '',
 		},
+		ranks: [
+			1,2,3,
+		],
 		colors: [
 			'white',
 			'red',
 			'blue',
 			'green',
 		],
-		notes: [{
-			title: 'Prima nota',
-			text: 'Vai de capul meu ce text inspirat!',
-			color: 'white',
-			date: new Date().toLocaleString()
-		}]
+		notes: Cookies.getJSON('notemaster'),
+
 	  },
 	  computed: {
 
-	  }
+	  },
+		created: function() {
+
+		},
+		beforeMount : function () {
+				if(Cookies.get('notemaster') == "undefined"){
+					this.notes = [{
+						title: 'Prima nota',
+						text: 'Vai de capul meu ce text inspirat!',
+						color: 'white',
+						rank: 1,
+						date: new Date().toLocaleString()
+					}];
+				}
+				Cookies.set('notemaster', this.notes, { expires: 365 });
+
+		}
 	  ,
 	  methods: {
-	  	addNote: function() {
-	  		let {title, text, color} = this.note;
+	  	addNote: function(e) {
+				if(!this.checkForm(e)) return;
+	  		let {title, text, color, rank} = this.note;
 	  		this.notes.push({
 	  			title,
 	  			text,
 	  			color,
-	  			date: new Date().toLocaleString() 
+					rank,
+	  			date: new Date().toLocaleString()
 	  		});
+				this.notes = _.orderBy(this.notes, ['rank'],['asc']);
+				Cookies.set('notemaster',this.notes);
 	  	},
+			checkForm: function () {
+				let {title, text, color, rank} = this.note;
+				if(title && text && color && rank) {
+					this.errors=[];
+					return true;
+				}
+				else{
+				if(!title) this.errors.push("Title Required!");
+				if(!text) this.errors.push("Content Required!");
+				if(!color) this.errors.push("Color for the Note is Required!");
+				if(!rank) this.errors.push("Rank for the Note is Required!");
+				return false
+				}
+			},
 	  	removeNote: function(index) {
 	  		this.notes.splice(index,1);
+				Cookies.set('notemaster',this.notes);
 	  	},
 
 	  	setColor: function(color) {
